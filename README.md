@@ -1,14 +1,27 @@
 # Spiking Traffic Sign Recognition
 
-This repository contains convolutional and spiking convolutional models for traffic sign recognition on the GTSRB dataset. It includes training, checkpoint evaluation, and inference energy estimation for CNN, SCNN, and SCNN-PD variants.
+This repository contains convolutional and directly trained spiking convolutional neural networks for traffic sign recognition on the German Traffic Sign Recognition Benchmark (GTSRB). The project includes training, evaluation, and inference energy estimation for CNN, SCNN, and SCNN with Population Decoding (SCNN-PD) variants.
+
+The implementation accompanies the following paper:
+
+> **Energy-Efficient Traffic Sign Recognition Using Directly Trained Spiking Neural Networks and Population Decoding**  
+> Jonas V. Schulte, Steven Peters  
+> *Frontiers in Neuroscience, 2026*
+
+📄 Paper: https://doi.org/10.3389/fnins.2026.1771436
+
+---
 
 ## Features
 
 - CNN baseline for GTSRB classification
-- Spiking CNN (`SCNN`) with configurable timesteps
-- Spiking CNN with population decoding (`SCNN-PD`)
+- Directly trained Spiking CNN (`SCNN`)
+- Spiking CNN with Population Decoding (`SCNN-PD`)
+- Configurable number of simulation timesteps
 - Checkpoint evaluation on the official GTSRB test split
-- Energy estimation for trained checkpoints
+- Inference energy estimation for CNNs and SNNs
+
+---
 
 ## Repository Structure
 
@@ -31,20 +44,26 @@ This repository contains convolutional and spiking convolutional models for traf
 └── utils.py
 ```
 
+---
+
 ## Requirements
 
-Install the dependencies with:
+Install the required dependencies using:
 
 ```bash
 pip install -r requirements.txt
 ```
 
+---
+
 ## Dataset
 
-This project uses the German Traffic Sign Recognition Benchmark (GTSRB):
+This project uses the **German Traffic Sign Recognition Benchmark (GTSRB)** dataset.
 
-- Dataset homepage: https://benchmark.ini.rub.de/gtsrb_news.html
-- Kaggle mirror used in the code layout:
+- Dataset homepage:  
+  https://benchmark.ini.rub.de/gtsrb_news.html
+
+- Kaggle mirror used for the repository structure:  
   https://www.kaggle.com/datasets/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign
 
 The scripts expect the dataset root at:
@@ -53,7 +72,7 @@ The scripts expect the dataset root at:
 ../../Data/gtsrb-german-traffic-sign
 ```
 
-Inside that directory, the expected files are:
+Expected structure:
 
 ```text
 gtsrb-german-traffic-sign/
@@ -61,7 +80,7 @@ gtsrb-german-traffic-sign/
 └── Test/
 ```
 
-The repository uses the split metadata stored in:
+The repository uses split metadata stored in:
 
 ```text
 splits/
@@ -70,15 +89,20 @@ splits/
 └── val_split.csv
 ```
 
-`train.py` reads `splits/train_split.csv` and `splits/val_split.csv`. `eval.py` and `energy_estimation.py` read `splits/Test.csv`. The CSV `Path` column is resolved relative to the dataset root above.
+- `train.py` uses:
+  - `splits/train_split.csv`
+  - `splits/val_split.csv`
 
-The dataset loader in [data.py](data.py) reads image paths and crops each image to the ROI specified in the CSV metadata.
+- `eval.py` and `energy_estimation.py` use:
+  - `splits/Test.csv`
+
+The dataset loader in [data.py](data.py) reads image paths and crops each image to the region of interest (ROI) specified in the CSV metadata.
+
+---
 
 ## Training
 
-The training entry point is [train.py](train.py).
-
-Run:
+The training entry point is:
 
 ```bash
 python3 train.py
@@ -86,29 +110,44 @@ python3 train.py
 
 The script is currently configured through constants inside `main()`, including:
 
-- seeds
-- timesteps
+- random seeds
+- number of timesteps
 - `run_snn`
 - `run_cnn`
 - `use_population_code`
 - batch size
-- patience
+- early stopping patience
 
 Generated checkpoints follow these naming schemes:
 
-- CNN: `cnn_seed=<seed>.pth`
-- SCNN: `scnn_t=<timesteps>_seed=<seed>.pth`
-- SCNN-PD: `scnn_pd_t=<timesteps>_seed=<seed>.pth`
+- CNN:
+  ```text
+  cnn_seed=<seed>.pth
+  ```
+
+- SCNN:
+  ```text
+  scnn_t=<timesteps>_seed=<seed>.pth
+  ```
+
+- SCNN-PD:
+  ```text
+  scnn_pd_t=<timesteps>_seed=<seed>.pth
+  ```
+
+---
 
 ## Evaluation
 
-Use [eval.py](eval.py) to compute the test accuracy of a checkpoint.
+Use `eval.py` to compute test accuracy.
 
 Examples:
 
 ```bash
 python3 eval.py --checkpoint checkpoints/CNN/cnn_seed=0.pth
+
 python3 eval.py --checkpoint checkpoints/SCNN/scnn_t=1_seed=0.pth
+
 python3 eval.py --checkpoint checkpoints/SCNN-PD/scnn_pd_t=1_seed=0.pth
 ```
 
@@ -122,15 +161,19 @@ python3 eval.py \
   --device cuda
 ```
 
+---
+
 ## Energy Estimation
 
-Use [energy_estimation.py](energy_estimation.py) to estimate inference energy from a checkpoint.
+Use `energy_estimation.py` to estimate inference energy consumption.
 
 Examples:
 
 ```bash
 python3 energy_estimation.py --checkpoint checkpoints/CNN/cnn_seed=0.pth
+
 python3 energy_estimation.py --checkpoint checkpoints/SCNN/scnn_t=1_seed=0.pth
+
 python3 energy_estimation.py --checkpoint checkpoints/SCNN-PD/scnn_pd_t=1_seed=0.pth
 ```
 
@@ -144,11 +187,34 @@ python3 energy_estimation.py \
 
 Supported processing units are defined in [energy_estimation.py](energy_estimation.py).
 
+---
+
 ## Notes
 
-- `eval.py` and `energy_estimation.py` automatically infer the model type from the checkpoint name.
-- Legacy CNN checkpoints with old layer names are handled automatically.
-- Training currently uses only train and validation splits. Test evaluation is intentionally separated into `eval.py`.
+- `eval.py` and `energy_estimation.py` automatically infer the model type from the checkpoint filename.
+- Legacy CNN checkpoints with older layer names are supported automatically.
+- Training currently uses only train and validation splits.
+- Test evaluation is intentionally separated into `eval.py`.
+
+---
+
+## Citation
+
+If you use this repository in your research, please cite:
+
+```bibtex
+@article{schulte2026energy,
+  title={Energy-Efficient Traffic Sign Recognition Using Directly Trained Spiking Neural Networks and Population Decoding},
+  author={Schulte, Jonas V. and Peters, Steven},
+  journal={Frontiers in Neuroscience},
+  volume={20},
+  year={2026},
+  doi={10.3389/fnins.2026.1771436},
+  url={https://doi.org/10.3389/fnins.2026.1771436}
+}
+```
+
+---
 
 ## License
 
